@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Ssangbomb/tinyapp/issues"
   },
-  "homepage": "https://github.com/Ssangbomb/tinyapp#readme"
+  "homepage": "https://github.com/Ssangbomb/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
