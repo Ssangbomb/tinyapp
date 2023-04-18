@@ -1,4 +1,6 @@
-function generateRandomString() {};
+function generateRandomString() {
+  return Math.random().toString(36).slice(6);
+};
 
 
 const express = require("express");
