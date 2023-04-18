@@ -24,6 +24,11 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortUrl}`);
 });
 
+app.get("/u/:id", (req, res) => {
+  const longURL = 
+  res.redirect(longURL);
+});
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -37,8 +42,9 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: "http://www.lighthouselabs.ca/"};
+app.get("/urls/:shortUrl", (req, res) => {
+  const templateVars = { id: req.params.shortUrl, longURL: req.params.longURL};
+  console.log(req.params);
   res.render("urls_show", templateVars);
 });
 
