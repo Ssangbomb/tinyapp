@@ -38,6 +38,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect(`/urls`);
 });
 
+//Using Cookie, make a userID
+//not sure It's workign properly
+app.post("/login", (req, res) => {
+  const userID = req.body.username;
+  res.cookie('name', userID);
+  res.redirect(`/urls`);
+})
+
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
