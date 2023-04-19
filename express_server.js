@@ -1,8 +1,10 @@
 const express = require("express");
+const cookieParser = require('cookie-parser')
 const app = express();
 const PORT = 8080; // default port 8080
 
 app.set("view engine", "ejs");
+app.use(cookieParser())
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -46,6 +48,24 @@ app.post("/login", (req, res) => {
   res.redirect(`/urls`);
 })
 
+//making login as : username
+app.get("/urls", (req, res) => {
+  const templateVars = { 
+    username: req.cookies["username"],
+    urls: urlDatabase 
+  };
+  res.render("urls_index", templateVars);
+});
+
+// app.get("/urls", (req, res) => {
+//   const templateVars = {
+//     username: req.cookies["name"],
+//     // ... any other vars
+//   };
+//   console.log(templateVars.username);
+//   res.render("urls_index", templateVars);
+// });
+
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
@@ -55,10 +75,6 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
-});
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
