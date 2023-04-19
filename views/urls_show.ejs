@@ -23,6 +23,14 @@
       </div>
       <div class="card-footer text-muted"></div>
     </div>
+    <div>
+      <!-- this method is post but it work GET in server side. -->
+      <form action="/urls/<%=shortURL %>" method="POST"> 
+        <label for="newURL">newURL : </label>
+        <input type="text" name="newURL" value="<%= longURL %>">
+        <button type="submit">Edit</button>
+      </form>
+    </div>
     <!-- Bootstrap JS -->
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

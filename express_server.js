@@ -15,7 +15,6 @@ function generateRandomString() {
   return Math.random().toString(36).slice(6);
 };
 
-
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   console.log(req.body); // Log the POST request body to the console
@@ -23,6 +22,15 @@ app.post("/urls", (req, res) => {
   console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`);
 });
+
+app.post("/urls/:shortURL", (req, res) => {
+  console.log(urlDatabase);
+  const editedURL = req.body.newURL;
+  const editedShortURL = req.params.shortURL;
+  urlDatabase[editedShortURL] = editedURL;
+  res.redirect("/urls")
+}) 
+
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   // console.log(req.params);
@@ -55,6 +63,7 @@ app.get("/urls/:shortURL", (req, res) => {
   }
   res.render("urls_show", templateVars);
 });
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
