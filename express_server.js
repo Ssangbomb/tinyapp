@@ -51,9 +51,10 @@ app.post("/login", (req, res) => {
 //making login as : username
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    username: req.cookies["username"],
+    username: req.cookies["name"],
     urls: urlDatabase 
   };
+  console.log(templateVars);
   res.render("urls_index", templateVars);
 });
 
