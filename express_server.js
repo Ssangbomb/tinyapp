@@ -45,6 +45,11 @@ function getUserByEmail(email) {
 }
 
 app.post("/urls", (req, res) => {
+  const userId = req.cookies["user_id"]
+  const user = users[userId];
+  if (!user) {
+    res.status(401).send('Log in before shorten URLs');
+  }
   const shortURL = generateRandomString();
   console.log(req.body); // Log the POST request body to the console
   urlDatabase[shortURL] = req.body.longURL;
@@ -139,6 +144,7 @@ app.get("/login", (req, res) => {
     user : user
   }
   res.render("login", templateVars);
+  res.redirect('/urls');
 })
 
 //user email and password
@@ -149,6 +155,7 @@ app.get("/register", (req, res) => {
     user : user
   }
   res.render("register", templateVars);
+  res.redirect('/urls');
 })
 
 //update it show email and url
@@ -165,6 +172,10 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  const shortUrl = req.params.shortURL;
+  if(!urlDatabase[shortUrl]) {
+    return res.status(400).send('There is no match short URL');
+  }
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
@@ -177,6 +188,9 @@ app.get("/", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies["user_id"]
   const user = users[userId];
+  if(!user) {
+    res.redirect("/login")
+  }
   const templateVars = {
     user : user,
   }
