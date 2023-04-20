@@ -32,6 +32,19 @@ function generateRandomString() {
   return Math.random().toString(36).substring(6);
 };
 
+// Do I need a function?
+// function getUserByEmail(email) {
+//   let foundUser = null;
+//   for(const userId in users) {
+//     const user = users[userId];
+//     if(user.email === newUserEmail) {
+//       // Found user
+//       return foundUser = user;
+//     }
+//   }
+//   return foundUser;
+// }
+
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   console.log(req.body); // Log the POST request body to the console
@@ -92,7 +105,6 @@ app.post("/register", (req, res) => {
   }
   const uniqueId = Math.random().toString(36).substring(2, 5);
   res.cookie('user_id', uniqueId);
-  // const newUser = res.cookie('name', userID);
   const newUser = {
     id: uniqueId,
     email: newUserEmail,
@@ -102,6 +114,16 @@ app.post("/register", (req, res) => {
   res.redirect("/urls")
 })
 
+app.get("/login", (req, res) => {
+  const userId = req.cookies["user_id"]
+  const user = users[userId];
+  console.log(user);
+  const templateVars = {
+    user : user
+  }
+  console.log(user);
+  res.render("login", templateVars);
+})
 
 //user email and password
 app.get("/register", (req, res) => {
