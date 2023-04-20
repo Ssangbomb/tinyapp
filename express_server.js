@@ -7,10 +7,17 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 app.use(cookieParser())
 app.use(morgan('dev'));
+app.use(express.urlencoded({ extended: true }));
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    userId: "abc",
+  },
+  sm5xKs: {
+    longURL: "http://www.google.com",
+    userId: "def",
+  }
 };
 
 const users = {
@@ -26,11 +33,21 @@ const users = {
   },
 };
 
-app.use(express.urlencoded({ extended: true }));
 
 function generateRandomString() {
   return Math.random().toString(36).substring(6);
 };
+
+function urlsForUser(id) {
+  const urlByuser = {};
+  for(let url in urlDatabase) {
+    console.log(url, id, urlDatabase[url]);
+    if(id === urlDatabase[url].userId ) {
+      urlByuser[url] = urlDatabase[url];
+    }
+  }
+  return urlByuser;
+}
 
 // Do I need a function?
 function getUserByEmail(email) {
@@ -45,27 +62,59 @@ function getUserByEmail(email) {
 }
 
 app.post("/urls", (req, res) => {
-  const userId = req.cookies["user_id"]
-  const user = users[userId];
+  const cookieId = req.cookies["user_id"]
+  const user = users[cookieId];
   if (!user) {
     res.status(401).send('Log in before shorten URLs');
   }
   const shortURL = generateRandomString();
-  console.log(req.body); // Log the POST request body to the console
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {
+    longURL:  req.body.longURL,
+    userId: cookieId
+  }
+  // urlDatabase.shortURL.userId = user[id];
   res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/urls/:shortURL", (req, res) => {
+  const cookieId = req.cookies["user_id"]
+  const user = users[cookieId];
   const editedURL = req.body.newURL;
   const editedShortURL = req.params.shortURL;
-  urlDatabase[editedShortURL] = editedURL;
+
+  if(!user) {
+    return res.status(401).send("You must log in");
+  }
+
+  if(!urlDatabase[editedShortURL]) {
+    return res.status(400).send('Your shortURL does not exist');
+  }
+  if(user.id !== urlDatabase[editedShortURL].userId) {
+    return res.status(401).send('There is no match')
+  }
+  urlDatabase[editedShortURL] = {
+    longURL: editedURL,
+    userId: cookieId
+  };
   res.redirect("/urls")
 }) 
 
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  // console.log(req.params);
+  const cookieId = req.cookies["user_id"]
+  const user = users[cookieId];
+
+  if(!urlDatabase[req.params.shortURL]) {
+    return res.status(400).send('Your shortURL does not exist');
+  }
+
+  if(!user) {
+    return res.status(401).send("You must log in");
+  }
+  if(user.id !== urlDatabase[req.params.shortURL].userId) {
+    return res.status(401).send('There is no match')
+  }
+  
   delete urlDatabase[req.params.shortURL];
   res.redirect(`/urls`);
 });
@@ -162,12 +211,13 @@ app.get("/register", (req, res) => {
 app.get("/urls", (req, res) => {
   const userId = req.cookies["user_id"]
   const user = users[userId];
-  console.log("userId", userId);
-  console.log("users[userId]", users[userId]);
-  const templateVars = { 
+  //filtering and make new personal database for user
+  
+  const templateVars = {
     user : user,
-    urls : urlDatabase 
+    urls : urlsForUser(userId)
   };
+  console.log("templateVars :", templateVars);
   res.render("urls_index", templateVars);
 });
 
@@ -176,7 +226,7 @@ app.get("/u/:shortURL", (req, res) => {
   if(!urlDatabase[shortUrl]) {
     return res.status(400).send('There is no match short URL');
   }
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -200,10 +250,17 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const userId = req.cookies["user_id"]
   const user = users[userId];
+  if(!userId) {
+    return res.status(401).send("Please login before entering individual URL pages");
+  }
+  
+  if(user.id !== urlDatabase[req.params.shortURL].userId) {
+    return res.status(401).send("You're accessing the  wrong URL page");
+  }
   const templateVars = { 
     user : user,
     shortURL: req.params.shortURL,
-    longURL:  urlDatabase[req.params.shortURL],
+    longURL:  urlDatabase[req.params.shortURL].longURL,
   }
   res.render("urls_show", templateVars);
 });
