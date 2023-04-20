@@ -14,7 +14,7 @@ const urlDatabase = {
 };
 
 const users = {
-  adc: {
+  abc: {
     id: "abc",
     email: "a@a.com",
     password: "1234",
@@ -33,17 +33,16 @@ function generateRandomString() {
 };
 
 // Do I need a function?
-// function getUserByEmail(email) {
-//   let foundUser = null;
-//   for(const userId in users) {
-//     const user = users[userId];
-//     if(user.email === newUserEmail) {
-//       // Found user
-//       return foundUser = user;
-//     }
-//   }
-//   return foundUser;
-// }
+function getUserByEmail(email) {
+  for(const userId in users) {
+    const user = users[userId];
+    if(user.email === email) {
+      // Found user
+      return user;
+    }
+  }
+  return null;
+}
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
@@ -53,7 +52,6 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  console.log(urlDatabase);
   const editedURL = req.body.newURL;
   const editedShortURL = req.params.shortURL;
   urlDatabase[editedShortURL] = editedURL;
@@ -70,15 +68,42 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //Using Cookie, make a userID
 //not sure It's workign properly
 app.post("/login", (req, res) => {
-  const userID = req.body.username;
-  res.cookie('name', userID);
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(400).send('Please provide an email AND a password');
+  }
+
+  let foundUser = null;
+
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email) {
+      // we found our user!!!
+      foundUser = user;
+    }
+  }
+
+  if (!foundUser) {
+    return res.status(400).send('no user with that email found');
+  }
+
+  if (foundUser.password !== password) {
+    return res.status(400).send('passwards do not match');
+  }
+
+
+  res.cookie('user_id', foundUser.id);
+
+
   res.redirect(`/urls`);
 })
 
 app.post("/logout", (req, res) => {
-  const userID = req.body.username;
-  res.clearCookie('name', userID)
-  res.redirect(`/urls`);
+  const userId = req.body.user;
+  res.clearCookie('user_id', userId)
+  res.redirect(`/login`);
 })
 
 //registration userID, email and password
@@ -92,15 +117,8 @@ app.post("/register", (req, res) => {
   }
 
   // check if a user with this email already exists
-  let foundUser = null;
-  for(const userId in users) {
-    const user = users[userId];
-    if(user.email === newUserEmail) {
-      // Found user
-      foundUser = user;
-    }
-  }
-  if(foundUser) {
+
+  if(getUserByEmail(newUserEmail)) {
     return res.status(400).send('a user with that email already exists');
   }
   const uniqueId = Math.random().toString(36).substring(2, 5);
@@ -117,11 +135,9 @@ app.post("/register", (req, res) => {
 app.get("/login", (req, res) => {
   const userId = req.cookies["user_id"]
   const user = users[userId];
-  console.log(user);
   const templateVars = {
     user : user
   }
-  console.log(user);
   res.render("login", templateVars);
 })
 
@@ -129,21 +145,21 @@ app.get("/login", (req, res) => {
 app.get("/register", (req, res) => {
   const userId = req.cookies["user_id"]
   const user = users[userId];
-  console.log(user);
   const templateVars = {
     user : user
   }
-  console.log(user);
   res.render("register", templateVars);
 })
 
-//making login as : username
+//update it show email and url
 app.get("/urls", (req, res) => {
   const userId = req.cookies["user_id"]
   const user = users[userId];
+  console.log("userId", userId);
+  console.log("users[userId]", users[userId]);
   const templateVars = { 
     user : user,
-    urls: urlDatabase 
+    urls : urlDatabase 
   };
   res.render("urls_index", templateVars);
 });

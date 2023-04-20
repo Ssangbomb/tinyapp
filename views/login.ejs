@@ -11,7 +11,7 @@
       integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
       crossorigin="anonymous"
     />
-  <title>register</title>
+  <title>Login</title>
 </head>
 <body>
   <%- include('partials/_header') %>
@@ -19,9 +19,9 @@
   <div>
     <form action="/login" method="POST">
       <label for="email">Email :</label>
-      <input type="email" name="email">
+      <input type="email" name="email" placeholder="Email Address">
       <label for="password">Passward</label>
-      <input type="password" name="password">
+      <input type="password" name="password" placeholder="Passward">
       <button type="submit">Login</button>
     </form>
   </div>
