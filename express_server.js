@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieParser = require('cookie-parser')
 const morgan = require('morgan');
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -24,12 +25,12 @@ const users = {
   abc: {
     id: "abc",
     email: "a@a.com",
-    password: "1234",
+    password: "$2a$10$Ecx0Lc1eYN51agQNx5egVuc/a4BAUjLzeS5DXnjw7zpiuqPQFR2Ay",
   },
   def: {
     id: "def",
     email: "b@b.com",
-    password: "5678",
+    password: "$2a$10$UyTV.Ru.rMNh/av11gg50uGvWEgTVdo5yI.PvjSK5slq4qI2cdFR.",
   },
 };
 
@@ -41,13 +42,12 @@ function generateRandomString() {
 function urlsForUser(id) {
   const urlByuser = {};
   for(let url in urlDatabase) {
-    console.log(url, id, urlDatabase[url]);
     if(id === urlDatabase[url].userId ) {
       urlByuser[url] = urlDatabase[url];
     }
   }
   return urlByuser;
-}
+};
 
 // Do I need a function?
 function getUserByEmail(email) {
@@ -65,7 +65,7 @@ app.post("/urls", (req, res) => {
   const cookieId = req.cookies["user_id"]
   const user = users[cookieId];
   if (!user) {
-    res.status(401).send('Log in before shorten URLs');
+    return res.status(401).send('Log in before shorten URLs');
   }
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
@@ -138,15 +138,14 @@ app.post("/login", (req, res) => {
       foundUser = user;
     }
   }
-
+  // console.log("founderUser : ", foundUser);
   if (!foundUser) {
     return res.status(400).send('no user with that email found');
   }
 
-  if (foundUser.password !== password) {
-    return res.status(400).send('passwards do not match');
+  if(!bcrypt.compareSync(password, foundUser.password)) {
+    return res.status(400).send('password do not match');
   }
-
 
   res.cookie('user_id', foundUser.id);
 
@@ -164,23 +163,24 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const newUserEmail = req.body.email;
   const newUserPassword = req.body.password;
-
+  
   //check if email and password were NOT provided
   if(!newUserEmail || !newUserPassword) {
     return res.status(400).send('Please provide an email AND a password');
   }
-
+  
   // check if a user with this email already exists
-
+  
   if(getUserByEmail(newUserEmail)) {
     return res.status(400).send('a user with that email already exists');
   }
   const uniqueId = Math.random().toString(36).substring(2, 5);
+  const hashedPassword = bcrypt.hashSync(newUserPassword, 10);
   res.cookie('user_id', uniqueId);
   const newUser = {
     id: uniqueId,
     email: newUserEmail,
-    password: newUserPassword
+    password: hashedPassword
   }
   users[uniqueId] = newUser;
   res.redirect("/urls")
@@ -193,7 +193,6 @@ app.get("/login", (req, res) => {
     user : user
   }
   res.render("login", templateVars);
-  res.redirect('/urls');
 })
 
 //user email and password
@@ -204,7 +203,6 @@ app.get("/register", (req, res) => {
     user : user
   }
   res.render("register", templateVars);
-  res.redirect('/urls');
 })
 
 //update it show email and url
@@ -217,7 +215,6 @@ app.get("/urls", (req, res) => {
     user : user,
     urls : urlsForUser(userId)
   };
-  console.log("templateVars :", templateVars);
   res.render("urls_index", templateVars);
 });
 
@@ -239,7 +236,7 @@ app.get("/urls/new", (req, res) => {
   const userId = req.cookies["user_id"]
   const user = users[userId];
   if(!user) {
-    res.redirect("/login")
+    return res.redirect("/login")
   }
   const templateVars = {
     user : user,
